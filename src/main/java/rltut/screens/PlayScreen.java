@@ -8,8 +8,8 @@ import rltut.WorldBuilder;
 public class PlayScreen implements Screen {
 
     private World world;
-    private int centerX;
-    private int centerY;
+    private int centerX; // centerX and centerY are effectively the players position. I would change
+    private int centerY; // these variable names, but I don't want to stray from the tutorial too much.
     private int screenWidth;
     private int screenHeight;
 
@@ -24,10 +24,15 @@ public class PlayScreen implements Screen {
     }
 
     public int getScrollX() {
+        // Tells displayTiles() where the left edge of the screen should start and when to scroll the "camera".
+        // Returns zero if the player is not more than halfway across the cave.
+        // (world.width() - screenWidth) prevents left from being updated when the screen is
+        //      already showing the right-most edge of the world.
         return Math.max(0, Math.min(centerX - screenWidth / 2, world.width() - screenWidth));
     }
 
     public int getScrollY() {
+        // Tells displayTiles() where the top edge of the screen should start.
         return Math.max(0, Math.min(centerY - screenHeight / 2, world.height() - screenHeight));
     }
 
@@ -37,12 +42,18 @@ public class PlayScreen implements Screen {
                 int wx = x + left;
                 int wy = y + top;
 
+                // Takes the position of the current terminal tile at (x,y) and
+                // uses the left and top as offsets to place the correct glyph.
+                // wx and wy can be thought of as "world.x and world.y" whereas
+                // x and y are screen coordinates.
                 terminal.write(world.glyph(wx, wy), x, y, world.color(wx, wy));
             }
         }
     }
 
     public void scrollBy(int mx, int my) {
+        // mx and my are given values when a movement key is pressed.
+        // Updates the players coordinates while preventing them from going out of bounds.
         centerX = Math.max(0, Math.min(centerX + mx, world.width() - 1));
         centerY = Math.max(0, Math.min(centerY + my, world.height() - 1));
     }
@@ -52,9 +63,12 @@ public class PlayScreen implements Screen {
         int top = getScrollY();
         displayTiles(terminal, left, top);
 
-        terminal.write('X', centerX - left, centerY - top);
-        terminal.writeCenter("You are having fun.", 22);
-        terminal.writeCenter("-- press [escape] to lose or [enter] to win --", 23);
+        // Keeps the players position accurate when the camera moves
+        terminal.write('@', centerX - left, centerY - top);
+
+        // Just debug text to help me understand this file
+        terminal.writeCenter("(centerX, centerY) : (" + centerX + ", " + centerY + ")", 22);
+        terminal.writeCenter("(left, top) : (" + left + ", " + top + ")", 23);
     }
 
     public Screen respondToUserInput(KeyEvent key) {
